@@ -9,13 +9,15 @@ class array
 public:
 
     array() : ptr_{ new T[Size] } { }
+
     array(const array& arr)
     {
         ptr_ = new T[Size];
 
-        for (std::size_t i{}; i < Size; ++i)
+        for (std::size_t i = 0; i < Size; ++i)
             ptr_[i] = arr.ptr_[i];
     }
+
     array& operator=(const array& arr)
     {
         if (this == &arr)
@@ -31,10 +33,12 @@ public:
     
         return *this;
     }
+
     array(array&& arr)
     {
         ptr_ = std::exchange(arr.ptr_, nullptr);
     }
+
     array& operator=(array&& arr)
     {
         if (this == &arr)
@@ -44,12 +48,11 @@ public:
 
         return *this;
     }
+
     ~array() { delete[] ptr_; }
 
-    T& operator[](std::size_t index)
-    {
-        return ptr_[index];
-    }
+    T& operator[](std::size_t index) { return ptr_[index]; }
+
     T& at(std::size_t index) const
     {
         if (index >= Size)
@@ -57,11 +60,13 @@ public:
         
         return ptr_[index];
     }
+
     void fill(const T& value)
     {
         for (std::size_t i{}; i < Size; ++i)
             ptr_[i] = value;
     }
+
     T& front() const { return *(ptr_[0]); }
     T& back() const { return *(ptr_[Size - 1]); }
     T* data() const { return ptr_; }
