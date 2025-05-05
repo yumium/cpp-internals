@@ -5,59 +5,62 @@
 
 struct ControlBlock
 {
-    size_t count_{ };
-    mutable std::mutex mutex_; // why mutable?
+    size_t _count{ };
+    mutable std::mutex _mutex; // why mutable?
 };
 
 template <typename T>
 class SharedPointer
 {
 public:
-
+    // Constructors
     SharedPointer() : SharedPointer(nullptr) { }
-    SharedPointer(std::nullptr_t) { } // what is this type?
+    SharedPointer(std::nullptr_t) { }
     SharedPointer(T* pointer)
     {
-        Initialize(pointer);
+        _initialise(pointer);
     }
 
+    // Copy constructor
     SharedPointer(const SharedPointer& other) noexcept
     {
-        CopyFrom(other);
+        _copy_from(other);
     }
 
-    // TODO
+    // Copy assignment
     SharedPointer& operator=(const SharedPointer& other) noexcept
     {
         if (this == &other)
             return *this;
 
-        TryRelease();
-        CopyFrom(other);
+        _try_release();
+        _copy_from(other);
 
         return *this;
     }
 
+    // Move constructor
     SharedPointer(SharedPointer&& other) noexcept
     {
-        StealFrom(other);
+        _steal_from(other);
     }
 
-    // TODO
+    // Move assignment
     SharedPointer& operator=(SharedPointer&& other) noexcept
     {
         if (this == &other)
             return *this;
 
-        TryRelease();
-        StealFrom(other);
+        _try_release();
+        _steal_from(other);
 
         return *this;
     }
 
+    // Destructor
     ~SharedPointer()
     {
-        TryRelease();
+        _try_release();
     }
 
     void reset(T* pointer)
@@ -67,74 +70,73 @@ public:
         if (pointer == nullptr)
             return;
 
-        Initialize(pointer);
+        _initialise(pointer);
     }
 
     void reset()
     {
-        TryRelease();
+        _try_release();
     }
 
     size_t get_count() const
     {
-        std::scoped_lock lock{ block_->mutex_ };
-        return block_->count_;
+        std::scoped_lock lock{ _block->_mutex };
+        return _block->_count;
     }
 
-    T* get() const { return pointer_; }
-    T* operator->() const { return pointer_; } // TODO: how do these overloads work?
-    T& operator*() const { return *pointer_; }
-    operator bool() const noexcept { return pointer_ != nullptr; }
+    T* get() const { return _pointer; }
+    T* operator->() const { return _pointer; }
+    T& operator*() const { return *_pointer; }
+    operator bool() const noexcept { return _pointer != nullptr; }
 
 private:
 
-    void CopyFrom(const SharedPointer& other) noexcept
+    void _copy_from(const SharedPointer& other) noexcept
     {
-        pointer_ = other.pointer_;
-        block_ = other.block_;
+        _pointer = other._pointer;
+        _block = other._block;
 
-        if (block_ == nullptr)
+        if (_block == nullptr)
             return;
 
-        std::scoped_lock lock{ block_->mutex_ };
-        block_->count_++;
+        std::scoped_lock lock{ _block->_mutex };
+        _block->_count++;
     }
 
-    // TODO
-    void StealFrom(SharedPointer&& other) noexcept
+    void _steal_from(SharedPointer&& other) noexcept
     {
-        pointer_ = std::exchange(other.pointer_, nullptr);
-        block_ = std::exchange(other.block_, nullptr);
+        _pointer = std::exchange(other._pointer, nullptr);
+        _block = std::exchange(other._block, nullptr);
     }
 
-    void Initialize(T* pointer)
+    void _initialise(T* pointer)
     {
-        pointer_ = pointer;
-        block_ = new ControlBlock{1}; // how does this init work?
+        _pointer = pointer;
+        _block = new ControlBlock{1};
     }
 
-    void TryRelease()
+    void _try_release()
     {
-        if (block_ == nullptr)
+        if (_block == nullptr)
             return;
             
         {                      
             // TODO: what is std::scoped_lock?
-            std::scoped_lock lock{ block_->mutex_ };
+            std::scoped_lock lock{ _block->_mutex };
 
-            if (--block_->count_ != 0)
+            if (--_block->_count != 0)
                 return;
         }
 
-        delete pointer_;
-        pointer_ = nullptr;
+        delete _pointer;
+        _pointer = nullptr;
 
-        delete block_;
-        block_ = nullptr;
+        delete _block;
+        _block = nullptr;
     }
 
-    T* pointer_{ nullptr };
-    ControlBlock* block_{ nullptr };
+    T* _pointer{ nullptr };
+    ControlBlock* _block{ nullptr };
 };
 
 int main()
