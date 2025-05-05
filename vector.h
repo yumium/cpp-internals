@@ -18,15 +18,15 @@ public:
     void clear();
     size_t size() const
     {
-        return size_;
+        return _size;
     }
     size_t capacity() const
     {
-        return capacity_;
+        return _capacity;
     }
     T* data() const
     {
-        return data_;
+        return _data;
     }
     Allocator get_allocator() const
     {
@@ -35,15 +35,15 @@ public:
 
 private:
 
-    void TryExpandCapacity()
+    void _try_expand_capacity()
     {
-        if (size_ == capacity_)
-            reserve(capacity_ == 0 ? 1 : capacity_ * 2);
+        if (_size == _capacity)
+            reserve(_capacity == 0 ? 1 : _capacity * 2);
     }
 
-    size_t size_{ };
-    size_t capacity_{ };
-    T* data_{ nullptr };
+    size_t _size{ };
+    size_t _capacity{ };
+    T* _data{ nullptr };
 };
 
 template <typename T, typename Allocator>
@@ -71,7 +71,7 @@ Vector<T, Allocator>::Vector(const std::initializer_list<T> items)
 template <typename T, typename Allocator>
 void Vector<T, Allocator>::reserve(size_t newCapacity)
 {
-    if (newCapacity <= capacity_)
+    if (newCapacity <= _capacity)
         return;
 
     // 1. Allocate memory.
@@ -79,52 +79,52 @@ void Vector<T, Allocator>::reserve(size_t newCapacity)
     T* allocatedMemory = allocator.allocate(newCapacity);
 
     // 2. Copy over existing objects.
-    if (data_ != nullptr)
+    if (_data != nullptr)
     {
         // Can move items, but if moved, and an error is thrown halfway through, we lose the strong
         // exception guarantee I'm aiming to maintain. Let's not worry about that for now.
-        for (size_t i{}; i < size_; ++i)
-            new (allocatedMemory + i) T{ data_[i] };
+        for (size_t i{}; i < _size; ++i)
+            new (allocatedMemory + i) T{ _data[i] };
      
         // 3. Destruct existing objects.
-        for (size_t i{}; i < size_; ++i)
-            data_[i].~T();
+        for (size_t i{}; i < _size; ++i)
+            _data[i].~T();
 
         // 4. Deallocate existing objects.
-        allocator.deallocate(data_, capacity_);
+        allocator.deallocate(_data, _capacity);
     }
 
-    capacity_ = newCapacity;
-    data_ = allocatedMemory;
+    _capacity = newCapacity;
+    _data = allocatedMemory;
 }
 
 template <typename T, typename Allocator>
 void Vector<T, Allocator>::push_back(const T& item)
 {
-    TryExpandCapacity();
+    _try_expand_capacity();
 
-    new (data_ + size_++) T{ item };
+    new (_data + _size++) T{ item };
 }
 
 template <typename T, typename Allocator>
 template <typename... Args>
 void Vector<T, Allocator>::emplace_back(Args&&... args)
 {
-    TryExpandCapacity();
+    _try_expand_capacity();
 
-    new (data_ + size_++) T(std::forward<Args>(args)...);
+    new (_data + _size++) T(std::forward<Args>(args)...);
 }
 
 template <typename T, typename Allocator>
 void Vector<T, Allocator>::clear()
 {
-    if (data_ == nullptr)
+    if (_data == nullptr)
         return;
 
-    for (size_t i{}; i < size_; ++i)
-        data_[i].~T();
+    for (size_t i{}; i < _size; ++i)
+        _data[i].~T();
 
-    size_ = 0;
+    _size = 0;
 }
 
 

@@ -9,6 +9,8 @@ struct CustomDeleter
     }
 };
 
+// UniquePointer enforces unique ownership by disabling copy
+// Memory freeing is done similar to SharedPointer
 template <typename T, typename Deleter = CustomDeleter<T>>
 class UniquePointer
 {
@@ -23,7 +25,7 @@ public:
 
     UniquePointer(UniquePointer&& other) noexcept
     {
-        StealFrom(other);
+        _steal_from(other);
     }
 
     UniquePointer& operator=(UniquePointer&& other) noexcept
@@ -31,7 +33,7 @@ public:
         if (this == &other)
             return *this;
 
-        StealFrom(other);
+        _steal_from(other);
 
         return *this;
     }
@@ -44,9 +46,7 @@ public:
 
     T* release()
     {
-        auto* temporaryPointer = pointer_;
-        pointer_ = nullptr;
-        return temporaryPointer;
+        return std::exchange(pointer_, nullptr);
     }
 
     void reset(T* pointer)
@@ -71,7 +71,7 @@ public:
 
 private:
 
-    void StealFrom(UniquePointer&& other)
+    void _steal_from(UniquePointer&& other)
     {
         pointer_ = std::exchange(other.pointer_, nullptr);
     }
