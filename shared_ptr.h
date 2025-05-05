@@ -9,6 +9,8 @@ struct ControlBlock
     mutable std::mutex _mutex; // why mutable?
 };
 
+// SharedPointer hold internally the pointer and points to a `count` object shared by other
+// SharedPointer objects holding the same underlying pointer
 template <typename T>
 class SharedPointer
 {
