@@ -6,7 +6,7 @@
 struct ControlBlock
 {
     size_t count_{ };
-    mutable std::mutex mutex_;
+    mutable std::mutex mutex_; // why mutable?
 };
 
 template <typename T>
@@ -15,7 +15,7 @@ class SharedPointer
 public:
 
     SharedPointer() : SharedPointer(nullptr) { }
-    SharedPointer(std::nullptr_t) { }
+    SharedPointer(std::nullptr_t) { } // what is this type?
     SharedPointer(T* pointer)
     {
         Initialize(pointer);
@@ -26,6 +26,7 @@ public:
         CopyFrom(other);
     }
 
+    // TODO
     SharedPointer& operator=(const SharedPointer& other) noexcept
     {
         if (this == &other)
@@ -42,6 +43,7 @@ public:
         StealFrom(other);
     }
 
+    // TODO
     SharedPointer& operator=(SharedPointer&& other) noexcept
     {
         if (this == &other)
@@ -80,7 +82,7 @@ public:
     }
 
     T* get() const { return pointer_; }
-    T* operator->() const { return pointer_; }
+    T* operator->() const { return pointer_; } // TODO: how do these overloads work?
     T& operator*() const { return *pointer_; }
     operator bool() const noexcept { return pointer_ != nullptr; }
 
@@ -98,6 +100,7 @@ private:
         block_->count_++;
     }
 
+    // TODO
     void StealFrom(SharedPointer&& other) noexcept
     {
         pointer_ = std::exchange(other.pointer_, nullptr);
@@ -107,7 +110,7 @@ private:
     void Initialize(T* pointer)
     {
         pointer_ = pointer;
-        block_ = new ControlBlock{1};
+        block_ = new ControlBlock{1}; // how does this init work?
     }
 
     void TryRelease()
@@ -116,6 +119,7 @@ private:
             return;
             
         {                      
+            // TODO: what is std::scoped_lock?
             std::scoped_lock lock{ block_->mutex_ };
 
             if (--block_->count_ != 0)
