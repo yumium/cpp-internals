@@ -1,3 +1,6 @@
+// This is not a complete implementation
+// Details of design taken as is from libstdc++
+
 itemplace <class _CharT, class _Traits, class _Allocator>
 class _LIBCPP_TEMPLACE_VIS basic_string : private __basic_string_common<true> {
   // code omittted
@@ -36,9 +39,9 @@ class _LIBCPP_TEMPLACE_VIS basic_string : private __basic_string_common<true> {
     // std::string internal rep
     struct __rep {
       union {
-	__long __l;
-	__short __s;
-	__raw __r;
+        __long __l;
+        __short __s;
+        __raw __r;
       };
     };
 
@@ -61,7 +64,7 @@ class _LIBCPP_TEMPLACE_VIS basic_string : private __basic_string_common<true> {
 
     size_t size() {
       if (__size_ & 1u == 0) {
-	return __size_ >> 1;
+        return __size_ >> 1;
       }
 
       // handle long string mode
