@@ -9,8 +9,14 @@ template <typename T, typename Allocator = std::allocator<T>> // TODO: look more
 class Vector
 {
 public:
+    Vector() = default;
     Vector(size_t count, const T& item);
     Vector(const std::initializer_list<T> items);
+    Vector(const Vector& other);
+    Vector& operator=(const Vector& other);
+    Vector(Vector&& other) noexcept;
+    Vector& operator=(Vector&& other) noexcept;
+    ~Vector();
     void reserve(size_t capacity);
     void push_back(const T& item);
 
@@ -54,6 +60,80 @@ Vector<T, Allocator>::Vector(const std::initializer_list<T> items)
     for (auto&& item : items)
     {
         push_back(item);
+    }
+}
+
+// Copy Constructor
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(const Vector& other)
+    : _size(other._size), _capacity(other._capacity)
+{
+    Allocator allocator;
+    _data = allocator.allocate(_capacity);
+    for (size_t i = 0; i < _size; ++i) {
+        new (_data + i) T(other._data[i]);
+    }
+}
+
+// Copy Assignment Operator (simplified version)
+template <typename T, typename Allocator>
+Vector<T, Allocator>& Vector<T, Allocator>::operator=(const Vector& other)
+{
+    if (this == &other) return *this;
+
+    // A more robust implementation would use the copy-and-swap idiom
+    clear();
+    Allocator allocator;
+    allocator.deallocate(_data, _capacity);
+
+    _size = other._size;
+    _capacity = other._capacity;
+    _data = allocator.allocate(_capacity);
+    for (size_t i = 0; i < _size; ++i) {
+        new (_data + i) T(other._data[i]);
+    }
+    return *this;
+}
+
+// Move Constructor
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(Vector&& other) noexcept
+    : _size(other._size), _capacity(other._capacity), _data(other._data)
+{
+    // Leave the moved-from object in a valid, empty state
+    other._data = nullptr;
+    other._size = 0;
+    other._capacity = 0;
+}
+
+// Move Assignment Operator
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(Vector&& other) noexcept // signature might be wrong
+{
+    if (this == &other) return *this;
+
+    clear();
+    Allocator allocator;
+    allocator.deallocate(_data, _capacity);
+
+    _data = other._data;
+    _size = other._size;
+    _capacity = other._capacity;
+
+    other._data = nullptr;
+    other._size = 0;
+    other._capacity = 0;
+
+    return *this;
+}
+
+template <typename T, typename Allocator>
+Vector<T, Allocator>::~Vector()
+{
+    clear(); // Calls destructors on all elements
+    if (_data) {
+        Allocator allocator;
+        allocator.deallocate(_data, _capacity);
     }
 }
 
@@ -101,7 +181,7 @@ void Vector<T, Allocator>::emplace_back(Args&&... args)
 {
     _try_expand_capacity();
 
-    new (_data + _size++) T(std::forward<Args>(args)...); // TODO: std::forward
+    new (_data + _size++) T(std::forward<Args>(args)...);
 }
 
 template <typename T, typename Allocator>

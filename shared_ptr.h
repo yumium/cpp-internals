@@ -6,7 +6,7 @@
 struct ControlBlock
 {
     size_t _count{ };
-    mutable std::mutex _mutex; // why mutable?
+    mutable std::mutex _mutex; // better with std::atomic<size_t>
 };
 
 // SharedPointer hold internally the pointer and points to a `count` object shared by other
@@ -67,12 +67,12 @@ public:
 
     void reset(T* pointer)
     {
-        reset();
+        SharedPointer temp(pointer);
 
-        if (pointer == nullptr)
-            return;
+        std::swap(_pointer, temp._pointer);
+        std::swap(_block, temp._block);
 
-        _initialise(pointer);
+        // old data freed when `temp` goes out of scope
     }
 
     void reset()
@@ -114,7 +114,9 @@ private:
     void _initialise(T* pointer)
     {
         _pointer = pointer;
-        _block = new ControlBlock{1};
+        if (_pointer != nullptr) {
+            _block = new ControlBlock{1};
+        } // don't allocate CB for nullptr
     }
 
     void _try_release()
@@ -145,3 +147,54 @@ int main()
 {   
     return 0;
 }
+
+/*
+To add make_shared (to have single allocation) we need to modify control block slightly
+
+// A base class for the control block to allow for type erasure
+struct ControlBlockBase
+{
+    std::atomic<size_t> _strong_count{0};
+
+    virtual ~ControlBlockBase() = default; // Essential for polymorphism!
+
+    // Pure virtual function to destroy the managed object
+    virtual void destroy_object() = 0;
+};
+
+// A derived control block that knows the type T of the object it manages
+template <typename T>
+struct ControlBlockImpl : public ControlBlockBase
+{
+    // We construct the T object in place within a buffer inside this class
+    // std::aligned_storage_t ensures memory is correctly aligned for T
+    std::aligned_storage_t<sizeof(T), alignof(T)> _storage;
+
+    // This method will be called to destruct the T object
+    void destroy_object() override
+    {
+        // Cast the storage back to a T* and call the destructor explicitly
+        reinterpret_cast<T*>(&_storage)->~T();
+    }
+};
+
+template <typename T, typename... Args>
+SharedPointer<T> make_shared(Args&&... args)
+{
+    // 1. Perform the SINGLE heap allocation.
+    // We allocate our combined object that holds both the control block logic
+    // and the storage for T.
+    auto* block_impl = new ControlBlockImpl<T>();
+
+    // 2. Construct the T object in the aligned storage within the control block.
+    // This is "placement new". We pass the arguments perfectly forwarded.
+    T* pointer = new (&block_impl->_storage) T(std::forward<Args>(args)...);
+
+    // 3. Set the initial reference count.
+    block_impl->_strong_count = 1;
+
+    // 4. Return a SharedPointer using the private constructor.
+    // It now shares ownership of the single allocated block.
+    return SharedPointer<T>(pointer, block_impl);
+}
+*/
