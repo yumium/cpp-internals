@@ -5,6 +5,9 @@ struct ControlBlock {
     size_t weak_count = 0;    // weak_ptrs
 };
 
+template<typename T>
+class WeakPtr;
+
 // shared_ptr
 template<typename T>
 class SharedPtr {
@@ -31,6 +34,22 @@ public:
     }
 
     size_t use_count() const { return ctrl->strong_count; }
+
+    friend class WeakPtr<T>;
+
+private:
+    SharedPtr(ControlBlock<T>* existing_ctrl) {
+        if (existing_ctrl && existing_ctrl->strong_count > 0) {
+            ptr = existing_ctrl->ptr;
+            ctrl = existing_ctrl;
+            ctrl->strong_count++;
+        } else {
+            // This case handles locking an expired pointer,
+            // resulting in a null SharedPtr.
+            ptr = nullptr;
+            ctrl = nullptr;
+        }
+    }
 };
 
 
@@ -51,15 +70,14 @@ public:
     }
 
     SharedPtr<T> lock() const {
-        if (ctrl->strong_count > 0)
-            return SharedPtr<T>(*ctrl);  // create new shared_ptr
-        return SharedPtr<T>(nullptr);    // expired
+        if (expired()) {
+            return SharedPtr<T>(nullptr);
+        }
+
+        return SharedPtr<T>(ctrl);
     }
 
     bool expired() const {
         return ctrl->strong_count == 0;
     }
 };
-
-
-
