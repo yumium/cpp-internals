@@ -3,6 +3,37 @@
 #include <iterator>
 #include <algorithm>
 
+/*
+operator[](std::size_t)
+operator[](std::size_t) const
+at(std::size_t)
+at(std::size_t) const
+front()
+front() const
+back()
+back() const
+data()
+data() const
+
+begin()
+cbegin() const
+end()
+cend() const
+rbegin()
+crbegin() const
+rend()
+crend() const
+
+empty()
+size()
+max_size()
+fill(T&)
+swap(array&)
+*/
+
+
+
+
 template <typename T, std::size_t Size>
 class array
 {
@@ -18,6 +49,7 @@ public:
 
     // --- Element Access ---
 
+    // $$ Why constexpr for [] and .at etc.? And returns value or reference?
     // Provides unchecked access. const and non-const versions.
     constexpr T& operator[](std::size_t index) noexcept
     {
@@ -29,6 +61,7 @@ public:
         return m_data[index];
     }
 
+    // $$ Check standard exceptions
     // Provides bounds-checked access.
     T& at(std::size_t index)
     {
@@ -89,6 +122,7 @@ public:
     constexpr const T* end() const noexcept { return data() + Size; }
     constexpr const T* cend() const noexcept { return end(); }
     
+    // $$ Check what std::reverse_iterator does
     // Reverse iterators
     using reverse_iterator = std::reverse_iterator<T*>;
     using const_reverse_iterator = std::reverse_iterator<const T*>;
@@ -108,11 +142,13 @@ public:
         return Size == 0;
     }
 
+    // $$ Is it std::size_t or just size_t?
     constexpr std::size_t size() const noexcept
     {
         return Size;
     }
 
+    // $$ What is max_size()?
     constexpr std::size_t max_size() const noexcept
     {
         return Size;

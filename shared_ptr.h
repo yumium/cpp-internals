@@ -3,6 +3,19 @@
 #include <mutex>
 #include <cstddef>
 
+/*
+Constructor
+- SharedPointer(std::nullptr_t)
+- SharedPointer(T*)
+
+reset(T*)
+reset()
+get_count()
+get()
+operator->()
+operator*()
+*/
+
 struct ControlBlock
 {
     size_t _count{ };

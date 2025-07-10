@@ -1,6 +1,17 @@
 #include <utility>
 #include <stdexcept>
 
+/*
+Constructors
+- SimpleOptional(nullopt_t)
+
+has_value()
+value()
+operator*()
+operator->()
+*/
+
+
 // A tag to represent the empty state
 struct nullopt_t {};
 inline constexpr nullopt_t nullopt;

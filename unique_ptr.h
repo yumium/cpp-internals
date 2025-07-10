@@ -1,5 +1,20 @@
 #include <utility>
 
+/*
+Constructors
+- UniquePointer(std::nullptr_t)
+- UniquePointer(T*)
+
+release()
+reset(T* = nullptr)
+swap(UniquePointer&)
+get()
+operator*()
+operator->()
+*/
+
+
+
 template <typename T>
 struct CustomDeleter
 {

@@ -1,3 +1,11 @@
+/*
+WeakPointer(const SharedPoiner<T>&)
+~WeakPointer()
+lock()
+expired()
+*/
+
+
 template<typename T>
 struct ControlBlock {
     T* ptr;
@@ -6,27 +14,27 @@ struct ControlBlock {
 };
 
 template<typename T>
-class WeakPtr;
+class WeakPointer;
 
 // shared_ptr
 template<typename T>
-class SharedPtr {
+class SharedPointer {
 public:
     T* ptr;
     ControlBlock<T>* ctrl;
 
-    SharedPtr(T* raw) {
+    SharedPointer(T* raw) {
         ptr = raw;
         ctrl = new ControlBlock<T>{raw, 1, 0};
     }
 
-    SharedPtr(const SharedPtr& other) {
+    SharedPointer(const SharedPointer& other) {
         ptr = other.ptr;
         ctrl = other.ctrl;
         ctrl->strong_count++;
     }
 
-    ~SharedPtr() {
+    ~SharedPointer() {
         if (--ctrl->strong_count == 0) {
             delete ptr;
             if (ctrl->weak_count == 0) delete ctrl;
@@ -35,10 +43,10 @@ public:
 
     size_t use_count() const { return ctrl->strong_count; }
 
-    friend class WeakPtr<T>;
+    friend class WeakPointer<T>;
 
 private:
-    SharedPtr(ControlBlock<T>* existing_ctrl) {
+    SharedPointer(ControlBlock<T>* existing_ctrl) {
         if (existing_ctrl && existing_ctrl->strong_count > 0) {
             ptr = existing_ctrl->ptr;
             ctrl = existing_ctrl;
@@ -55,26 +63,26 @@ private:
 
 // weak_ptr
 template<typename T>
-class WeakPtr {
+class WeakPointer {
 public:
     ControlBlock<T>* ctrl;
 
-    WeakPtr(const SharedPtr<T>& shared) {
+    WeakPointer(const SharedPointer<T>& shared) {
         ctrl = shared.ctrl;
         ctrl->weak_count++;
     }
 
-    ~WeakPtr() {
+    ~WeakPointer() {
         if (--ctrl->weak_count == 0 && ctrl->strong_count == 0)
             delete ctrl;
     }
 
-    SharedPtr<T> lock() const {
+    SharedPointer<T> lock() const {
         if (expired()) {
-            return SharedPtr<T>(nullptr);
+            return SharedPointer<T>(nullptr);
         }
 
-        return SharedPtr<T>(ctrl);
+        return SharedPointer<T>(ctrl);
     }
 
     bool expired() const {

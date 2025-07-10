@@ -5,6 +5,23 @@
 #include <initializer_list>
 #include <algorithm>
 
+/*
+Constructors
+- Vector(size_t, const T&)
+- Vector(const std::initializer_list<T>)
+
+reserve(size_t)
+push_back(const T&)
+
+template<typename... Args>
+emplace_back(Args&&... args)
+clear()
+size()
+capacity()
+data()
+get_allocator()
+*/
+
 template <typename T, typename Allocator = std::allocator<T>> // TODO: look more into std::allocator
 class Vector
 {
