@@ -15,6 +15,7 @@ operator->()
 
 
 
+// $$ What does this deleter do?
 template <typename T>
 struct CustomDeleter
 {

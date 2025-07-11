@@ -49,8 +49,9 @@ public:
 
     // --- Element Access ---
 
-    // $$ Why constexpr for [] and .at etc.? And returns value or reference?
     // Provides unchecked access. const and non-const versions.
+    // Note, constexpr here means it could be possible to make these computes at compile time,
+    // if the array values are known at compile time
     constexpr T& operator[](std::size_t index) noexcept
     {
         return m_data[index];
@@ -61,7 +62,6 @@ public:
         return m_data[index];
     }
 
-    // $$ Check standard exceptions
     // Provides bounds-checked access.
     T& at(std::size_t index)
     {
@@ -142,13 +142,14 @@ public:
         return Size == 0;
     }
 
-    // $$ Is it std::size_t or just size_t?
+    // Note the use of `std::size_t` here, this is more portable
     constexpr std::size_t size() const noexcept
     {
         return Size;
     }
 
-    // $$ What is max_size()?
+    // For arrays, `max_size() and `size()` are equivalent
+    // as there is no dynamic allocation
     constexpr std::size_t max_size() const noexcept
     {
         return Size;

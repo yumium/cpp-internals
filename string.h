@@ -18,6 +18,7 @@ class _LIBCPP_TEMPLACE_VIS basic_string : private __basic_string_common<true> {
       char __data_[23];
     };
 
+    // $$ who do these flags work?
     // convenience constants used for checking mode
     static const size_t __short_mask = 0x01;
     static const size_t __long_mask = 0x1ul;
@@ -44,6 +45,8 @@ class _LIBCPP_TEMPLACE_VIS basic_string : private __basic_string_common<true> {
         __raw __r;
       };
     };
+    
+    // $$ and we store the `__rep` privately?
 
     void __zero() {
       
@@ -52,11 +55,12 @@ class _LIBCPP_TEMPLACE_VIS basic_string : private __basic_string_common<true> {
   public:
     size_t capacity() {
       if (__cap_ & 1) { // long string mode.
-	// Clear last flag bit from __cap_
+        // Clear last flag bit from __cap_
         size_t buffer_size = __cap_ & ~1ul;
-	// Subtract 1 because the null terminator takes up one spot in
-	// the character buffer.
-	return buffer_size - 1;
+
+        // Subtract 1 because the null terminator takes up one spot in
+        // the character buffer.
+        return buffer_size - 1;
       }
 
       // handle short string mode

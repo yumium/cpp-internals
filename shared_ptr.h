@@ -48,7 +48,7 @@ public:
         if (this == &other)
             return *this;
 
-        _try_release();
+        _try_release(); // $$ Why is this needed for operator= but not above?
         _copy_from(other);
 
         return *this;
@@ -113,6 +113,9 @@ private:
 
         if (_block == nullptr)
             return;
+        
+        // Don't we have a dangling pointer if thread is descheduled and other thread's SharedPointer is destroyed?
+        // Or maybe we don't worry about mutex here?
 
         std::scoped_lock lock{ _block->_mutex };
         _block->_count++;
@@ -127,14 +130,15 @@ private:
     void _initialise(T* pointer)
     {
         _pointer = pointer;
-        if (_pointer != nullptr) {
+        if (_pointer)
+        {
             _block = new ControlBlock{1};
         } // don't allocate CB for nullptr
     }
 
     void _try_release()
     {
-        if (_block == nullptr)
+        if (!_block)
             return;
             
         {                      

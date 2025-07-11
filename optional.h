@@ -28,7 +28,7 @@ private:
 
 public:
     // Construct empty
-    SimpleOptional() : has_value_flag(false), dummy_() {}
+    SimpleOptional() : has_value_flag(false), dummy_() {} // use of anonymous union here
     SimpleOptional(nullopt_t) : has_value_flag(false), dummy_() {}
 
     // Construct with a value
@@ -42,7 +42,7 @@ public:
         }
     }
 
-    bool has_value() const {
+    [[nodiscard]] bool has_value() const noexcept {
         return has_value_flag;
     }
 

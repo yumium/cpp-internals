@@ -22,11 +22,12 @@ data()
 get_allocator()
 */
 
-template <typename T, typename Allocator = std::allocator<T>> // TODO: look more into std::allocator
+template <typename T, typename Allocator = std::allocator<T>> // $$ TODO: look more into std::allocator
 class Vector
 {
 public:
     Vector() = default;
+    Vector(size_t count) requires std::is_default_constructible<T>; // $$ is this right?
     Vector(size_t count, const T& item);
     Vector(const std::initializer_list<T> items);
     Vector(const Vector& other);
@@ -40,8 +41,8 @@ public:
     template <typename... Args>
     void emplace_back(Args&&... args);
     void clear();
-    size_t size() const { return _size; }
-    size_t capacity() const { return _capacity; }
+    [[nodiscard]] size_t size() const noexcept { return _size; }
+    [[nodiscard]] size_t capacity() const noexcept { return _capacity; }
     T* data() const { return _data; }
     Allocator get_allocator() const { return { }; }
 
@@ -57,6 +58,19 @@ private:
     size_t _capacity{ };
     T* _data{ nullptr };
 };
+
+template<typename T, typename Allocator>
+Vector<T, Allocator>::Vector(size_t count)
+{
+    reserve(count);
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        push_back(T{}); // $$ compile this
+    }
+    
+    // I think we're still doing a copy here
+}
 
 template <typename T, typename Allocator>
 Vector<T, Allocator>::Vector(size_t count, const T& item)
@@ -87,7 +101,8 @@ Vector<T, Allocator>::Vector(const Vector& other)
 {
     Allocator allocator;
     _data = allocator.allocate(_capacity);
-    for (size_t i = 0; i < _size; ++i) {
+    for (size_t i = 0; i < _size; ++i)
+    {
         new (_data + i) T(other._data[i]);
     }
 }
@@ -98,7 +113,7 @@ Vector<T, Allocator>& Vector<T, Allocator>::operator=(const Vector& other)
 {
     if (this == &other) return *this;
 
-    // A more robust implementation would use the copy-and-swap idiom
+    // A more robust implementation would use the copy-and-swap idiom ($$ what does this mean?)
     clear();
     Allocator allocator;
     allocator.deallocate(_data, _capacity);
